@@ -1,6 +1,7 @@
+from os import stat
 from pydantic import BaseModel, Field
 from typing import List
-from utils.db_context import DBCursor
+from src.utils.db_context import DBCursor
 
 
 class KnowledgeBase(BaseModel):
@@ -18,6 +19,19 @@ class KnowledgeBase(BaseModel):
                 );
                 """
             )
+
+    @staticmethod
+    def knowledge_base_exists(name: str) -> bool:
+        with DBCursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT EXISTS (
+                    SELECT 1 FROM knowledge_bases WHERE name = :name
+                );
+                """,
+                {"name": name},
+            )
+            return cursor.fetchone()[0]
 
     @staticmethod
     def create_knowledge_base(name: str, url: str):
@@ -63,14 +77,30 @@ class Resource(BaseModel):
                 """
             )
 
+    def context_string(self):
+        return f"Resource(resource_file_path={self.summary_file_path}, summary={self.short_description})"
+
     @staticmethod
     def get_resources_by_knowledge_base(knowledge_base: str) -> List["Resource"]:
         with DBCursor() as cursor:
             cursor.execute(
                 """
-                SELECT * FROM resources WHERE knowledge_base = :knowledge_base
+                SELECT * FROM resources WHERE lower(knowledge_base) LIKE lower(:pattern);
                 """,
-                {"knowledge_base": knowledge_base},
+                {"pattern": knowledge_base},
+            )
+            return [Resource(**row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def get_resources_by_knowledge_base_all_subtree(
+        knowledge_base: str,
+    ) -> List["Resource"]:
+        with DBCursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM resources WHERE lower(knowledge_base) LIKE lower(:pattern);
+                """,
+                {"pattern": f"{knowledge_base}%"},
             )
             return [Resource(**row) for row in cursor.fetchall()]
 
@@ -128,7 +158,7 @@ class LLMResource(BaseModel):
 
 
 class DiscoveryOutput(BaseModel):
-    summary_file_paths: List[str] = Field(
+    resource_file_paths: List[str] = Field(
         ...,
         description="A list of file paths to the summary files of the resources. Max of 5 files.",
     )
