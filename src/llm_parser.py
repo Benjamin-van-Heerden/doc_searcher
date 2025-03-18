@@ -107,3 +107,6 @@ if __name__ == "__main__":
     run_parser("ash_docs_postgres")
     run_parser("ecto_docs")
     run_parser("phoenix_docs")
+    run_parser("live_view_docs")
+    run_parser("fly_docs")
+    run_parser("fastapi_docs")

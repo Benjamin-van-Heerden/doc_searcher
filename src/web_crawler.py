@@ -286,3 +286,13 @@ if __name__ == "__main__":
         knowledge_base="live_view_docs",
         redo=False,
     )
+    run_scraper(
+        base_url="https://fastapi.tiangolo.com/",
+        knowledge_base="fastapi_docs",
+        redo=False,
+    )
+    run_scraper(
+        base_url="https://fly.io/docs/",
+        knowledge_base="fly_docs",
+        redo=False,
+    )

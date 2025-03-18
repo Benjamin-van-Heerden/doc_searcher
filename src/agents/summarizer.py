@@ -31,15 +31,23 @@ async def get_summarizer_response(file_content: str, name: str) -> LLMResource:
             "Any extraneous information must be removed, so only mark it as useful if you deem it absolutely essential and necessary",
             "NB: if there is any indication that the document is from a different version of an api or sdk, it is not useful",
             "Changelogs and really long seemingly repetitive information is also not useful",
+            "Any document that is not in english is also immediately not useful",
             "Here is the document content:",
             "---------------------",
             file_content,
             "---------------------",
             f"The document originates from {name} (remember to look for version information)",
+            "As a final reminder, remember the fields you need to return are the ('short_description', string), ('long_markdown_summary', string), ('useful', bool)",
+            "Also, remember to condense the information as best you can in the long markdown summary, code examples should be kept (unless there are duplicates or",
+            "the code does not inform any additional information), but paragraphs can be condensed and even removed if they do not add value",
+            "The long markdown summary may not exceed 3000 words due to internal limitations - very important!",
+            "Some documents, e.g. API reference pages, may be very long and while they contain useful information, the could exceed the word limit",
+            "In cases where you think the word limit will be exceeded, see if you can extract the most useful functions and configurations, just try your best",
         ],
         structured_outputs=True,
         response_model=LLMResource,
         markdown=True,
+        # debug_mode=True,
     )
 
     response = await agent.arun("Execute your instructions", retries=3)
